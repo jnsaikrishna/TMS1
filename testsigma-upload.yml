@@ -1,0 +1,37 @@
+name: Run Tests & Upload to Testsigma
+
+on:
+  push:
+    branches: [ main ]  # Or your preferred branch
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    env:
+      TESTSIGMA_API_TOKEN: ${{ secrets.TESTSIGMA_API_TOKEN }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        pip install unittest-xml-reporting
+
+    - name: Run tests and generate XML report
+      run: |
+        mkdir -p test-results
+        python3 -m xmlrunner discover -o test-results
+
+    - name: Upload to Testsigma TMS
+      run: |
+        echo "Uploading result to Testsigma..."
+        curl --location 'https://test-management.testsigma.com/api/v1/projects/19d53abc-74b5-49ad-b551-ac2165cdb6de/junit-import/test-run/TMS-R-21' \
+--header "Authorization: Bearer $TESTSIGMA_API_TOKEN"\
+--form 'junit_xml=@"/Users/saikrishna.javvadi/jenkins-junit-demo/test-results/TEST-test_sample.SampleTest-20250627094531.xml"'
